@@ -3,6 +3,8 @@ import sys
 import unittest
 import uuid
 
+from typing import Optional
+
 from simperium import core
 
 api_key = os.environ.get('SIMPERIUM_CLIENT_TEST_APIKEY')
@@ -16,8 +18,8 @@ if not appname:
     sys.exit()
 
 # cache user create to cut down on the number of users created by the test suite
-_username = None
-_password = None
+_username: Optional[str] = None
+_password: Optional[str] = None
 _auth_token = None
 def get_auth_token():
     global _username
@@ -34,7 +36,7 @@ def get_auth_token():
 class AuthTest(unittest.TestCase):
     def test_authorize(self):
         get_auth_token()
-        auth = core.Auth(appname, api_key)
+        auth: core.Auth = core.Auth(appname, api_key)
         auth.authorize(_username, _password)
 
 
