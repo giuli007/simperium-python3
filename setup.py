@@ -2,8 +2,6 @@ import sys
 from distutils.core import setup
 
 install_requires = []
-if sys.version_info < (2, 6):
-    install_requires.append('simplejson')
 
 setup(
     name='Simperium',

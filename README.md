@@ -1,15 +1,37 @@
-simperium-python
-==============
-Simperium is a simple way for developers to move data as it changes, instantly and automatically. This is the Python library. You can [browse the documentation](http://simperium.com/docs/python/).
+# simperium-python
 
-You can [sign up](http://simperium.com) for a hosted version of Simperium. There are Simperium libraries for [other languages](https://simperium.com/overview/) too.
+Simperium is a simple way for developers to move data as it changes, instantly
+and automatically. This is the Python library. You can [browse the
+documentation](http://simperium.com/docs/python/).
 
-This is not yet a full Simperium library for parsing diffs and changes. It's a wrapper for our [HTTP API](https://simperium.com/docs/http/) intended for scripting and basic backend development.
+You can [sign up](http://simperium.com) for a hosted version of Simperium. There
+are Simperium libraries for [other languages](https://simperium.com/overview/)
+too.
 
-### License
-The Simperium Python library is available for free and commercial use under the MIT license.
+This is not yet a full Simperium library for parsing diffs and changes. It's a
+wrapper for our [HTTP API](https://simperium.com/docs/http/) intended for
+scripting and basic backend development.
 
-### Getting Started
+This fork created to port the library to Python 3.
+
+
+## Developing
+
+Pipenv is used. Install the environment and deps with:
+
+```
+make install
+```
+
+Tests (unit tests with pytest and type checking with mypy):
+
+```
+make tests
+```
+
+
+## Getting Started
+
 To get started, first log into [https://simperium.com](https://simperium.com) and
 create a new application.  Copy down the new app's name, api key and admin key.
 
@@ -99,3 +121,9 @@ Of course, you can delete items:
     True
     >>> api.todo.index()['count']
     1
+
+
+## License
+
+The Simperium Python library is available for free and commercial use under the MIT license.
+
