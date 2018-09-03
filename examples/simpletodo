@@ -11,7 +11,7 @@ def list(appname, token):
     api = core.Api(appname, token)
     for item in api.todo.index(data=True)['index']:
         if not item['d'].get('done'):
-            print "%-40s%s" % (item['id'], item['d']['text'])
+            print("%-40s%s" % (item['id'], item['d']['text']))
 
 
 def add(appname, token, text):

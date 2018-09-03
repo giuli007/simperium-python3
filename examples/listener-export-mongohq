@@ -20,7 +20,7 @@ def main(appname, admin_key, bucket):
             changes = api[bucket].all(cv, data=True)
             for change in changes:
                 data = change['d']
-                print change['d']
+                print(change['d'])
 
                 # update mongo with the latest version of the data
                 if data:

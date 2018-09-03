@@ -31,7 +31,7 @@ def main(appname, bucket, admin_key, message_key):
         while True:
             changes = api[bucket].all(cv, data=True)
             for change in changes:
-                print str(change) + '\n---'
+                print(str(change) + '\n---')
 
                 userid = change['id'].split('/')[0]
                 if userid not in tokens:

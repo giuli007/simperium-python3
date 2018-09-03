@@ -10,7 +10,7 @@ def main(appname, admin_key, bucket):
         while True:
             changes = api[bucket].all(cv, data=True)
             for change in changes:
-                print str(change) + '\n---'
+                print((str(change) + '\n---'))
                 cv = change['cv']
     except KeyboardInterrupt:
         pass

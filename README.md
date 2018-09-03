@@ -29,6 +29,12 @@ Tests (unit tests with pytest and type checking with mypy):
 make tests
 ```
 
+Format all the code consistently:
+
+```
+make fmt
+```
+
 
 ## Getting Started
 

@@ -23,7 +23,7 @@ def main(appname, admin_key, bucket):
             changes = api[bucket].all(cv, data=True)
             for change in changes:
                 counter.process(change)
-                print "total todos done: %s" % counter.count
+                print("total todos done: %s" % counter.count)
                 cv = change['cv']
     except KeyboardInterrupt:
         pass
