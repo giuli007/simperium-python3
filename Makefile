@@ -1,5 +1,5 @@
 
-.PHONY: test install format
+.PHONY: test install fmt
 
 install:
 	pipenv install
@@ -8,5 +8,5 @@ test:
 	pipenv run mypy simperium/
 	pipenv run pytest
 
-format:
+fmt:
 	pipenv run black simperium examples

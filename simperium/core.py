@@ -2,7 +2,7 @@ import json
 import os
 import sys
 import uuid
-from typing import Optional
+from typing import Any, Dict, List, Optional, SupportsInt, Tuple, Union
 
 import requests
 
@@ -45,16 +45,13 @@ class Auth(object):
 
         data = {"client_id": self.api_key, "username": username, "password": password}
 
-        url = "{}://{}/1/{}".format(self.scheme, self.host, self.appname + "/create/")
         url = self._build_url(self.appname + "/create/")
         try:
             r = requests.post(url, data=data)
-            return r.json()["access_token"]
+            r.raise_for_status()
+            return r.json().get("access_token")
         except ValueError:
-            # invalid json
-            return None
-        except KeyError:
-            # no access_token
+            # invalid json, no access token
             return None
         except Exception:
             # TODO: handle http errors
@@ -66,10 +63,7 @@ class Auth(object):
         Returns the access token as a string or raises an error on failure.
         """
         data = {"client_id": self.api_key, "username": username, "password": password}
-
-        url = "{}://{}/1/{}".format(
-            self.scheme, self.host, self.appname + "/authorize/"
-        )
+        url = self._build_url(self.appname + "/authorize/")
         r = requests.post(url, data=data)
         return r.json()["access_token"]
 
@@ -94,14 +88,14 @@ class Bucket(object):
 
     def __init__(
         self,
-        appname,
-        auth_token,
-        bucket,
-        userid=None,
-        host=None,
-        scheme="https",
-        clientid=None,
-    ):
+        appname: str,
+        auth_token: str,
+        bucket: str,
+        userid: Optional[str] = None,
+        host: Optional[str] = None,
+        scheme: str = "https",
+        clientid: Optional[str] = None,
+    ) -> None:
 
         if not host:
             host = os.environ.get("SIMPERIUM_APIHOST", "api.simperium.com")
@@ -117,7 +111,7 @@ class Bucket(object):
         else:
             self.clientid = "py-%s" % uuid.uuid4().hex
 
-    def _auth_header(self):
+    def _auth_header(self) -> Dict[str, str]:
         headers = {"X-Simperium-Token": "%s" % self.auth_token}
         if self.userid:
             headers["X-Simperium-User"] = self.userid
@@ -129,7 +123,13 @@ class Bucket(object):
     def _build_url(self, endpoint: str) -> str:
         return "{}://{}/1/{}".format(self.scheme, self.host, endpoint)
 
-    def index(self, data=False, mark=None, limit=None, since=None):
+    def index(
+        self,
+        data: bool = False,
+        mark: Optional[str] = None,
+        limit: Optional[int] = None,
+        since: Optional[str] = None,
+    ) -> Dict[Any, Any]:
         """
         retrieve a page of the latest versions of a buckets documents
         ordered by most the most recently modified.
@@ -158,21 +158,20 @@ class Bucket(object):
         """
         url = self._build_url("%s/%s/index" % (self.appname, self.bucket))
 
-        args = {}
-        if data:
-            args["data"] = "1"
-        if mark:
-            args["mark"] = str(mark)
-        if limit:
-            args["limit"] = str(limit)
-        if since:
-            args["since"] = str(since)
+        params = {
+            "mark": str(mark) if mark is not None else None,
+            "limit": str(limit) if limit is not None else None,
+            "since": str(since) if since is not None else None,
+            "data": "1" if data else None,
+        }
 
-        r = requests.get(url, headers=self._auth_header(), params=args)
+        r = requests.get(url, headers=self._auth_header(), params=params) # type: ignore
         r.raise_for_status()
         return r.json()
 
-    def get(self, item: str, default=None, version=None):
+    def get(
+        self, item: str, default: Any = None, version: Optional[str] = None
+    ) -> Union[Any, Dict[Any, Any]]:
         """
         Retrieves either the latest version of item from this bucket, or the
         specific version requested.
@@ -191,8 +190,14 @@ class Bucket(object):
         return r.json()
 
     def post(
-        self, item, data, version=None, ccid=None, include_response=False, replace=False
-    ):
+        self,
+        item: str,
+        data: Dict[Any, Any],
+        version: Optional[str] = None,
+        ccid: Optional[str] = None,
+        include_response: bool = False,
+        replace: bool = False,
+    ) -> Optional[Union[str, Tuple[str, Dict[Any, Any]]]]:
         """posts the supplied data to item
 
             returns a unique change id on success, or None, if the post was not
@@ -201,20 +206,19 @@ class Bucket(object):
             If `include_response` is True, returns a tuple of (`item`, the json
             response). Otherwise, returns `item`)
         """
-        if not ccid:
-            ccid = self._gen_ccid()
+        ccid = ccid if ccid else self._gen_ccid()
 
         url = "%s/%s/i/%s" % (self.appname, self.bucket, item)
         if version:
             url += "/v/%s" % version
         url = self._build_url(url)
 
-        params = {"clientid": self.clientid, "ccid": ccid}
-
-        if include_response:
-            params["response"] = 1
-        if replace:
-            params["replace"] = 1
+        params = {
+            "clientid": self.clientid,
+            "ccid": ccid,
+            "response": 1 if include_response else None,
+            "replace": 1 if replace else None,
+        }
 
         try:
             r = requests.post(
@@ -223,14 +227,15 @@ class Bucket(object):
             r.raise_for_status()
             # TODO: return none on http error
         except Exception as e:
-            raise e
             return None
         if include_response:
             return item, r.json()
         else:
             return item
 
-    def bulk_post(self, bulk_data, wait=True):
+    def bulk_post(
+        self, bulk_data: Dict[Any, Any], wait: bool = True
+    ) -> Union[bool, Dict[Any, Any]]:
         """posts multiple items at once, bulk_data should be a map like:
 
             { "item1" : { data1 },
@@ -252,10 +257,10 @@ class Bucket(object):
         url = "%s/%s/changes" % (self.appname, self.bucket)
         url = self._build_url(url)
         params = {"clientid": self.clientid}
-        params["wait"] = 1
+        params["wait"] = "1"
 
-        r = request.post(
-            url, data=changes_list, headers=self._auth_header(), params=params
+        r = requests.post(
+            url, json=changes_list, headers=self._auth_header(), params=params
         )
         r.raise_for_status()
 
@@ -266,14 +271,20 @@ class Bucket(object):
         # check each change response for 'error'
         return r.json()
 
-    def new(self, data, ccid=None):
+    def new(
+        self, data: Dict[Any, Any], ccid: Optional[str] = None
+    ) -> Optional[Union[str, Tuple[str, Dict[Any, Any]]]]:
         return self.post(uuid.uuid4().hex, data, ccid=ccid)
 
-    def set(self, item, data, **kw):
+    def set(
+        self, item: str, data: Dict[Any, Any], **kw: Any
+    ) -> Optional[Union[str, Tuple[str, Dict[Any, Any]]]]:
         return self.post(item, data, **kw)
 
-    def delete(self, item, version=None):
-        """deletes the item from bucket"""
+    def delete(self, item: str, version: Optional[str] = None) -> Optional[str]:
+        """Deletes the item from bucket.
+        Returns the ccid if the response is not an empty string.
+        """
         ccid = self._gen_ccid()
         url = "%s/%s/i/%s" % (self.appname, self.bucket, item)
         if version:
@@ -284,6 +295,7 @@ class Bucket(object):
         r.raise_for_status()
         if not r.text.strip():
             return ccid
+        return None
 
     def changes(self, cv=None, timeout=None):
         """retrieves updates for this bucket for this user
@@ -319,14 +331,14 @@ class Bucket(object):
 
     def all(
         self,
-        cv=None,
-        data=False,
-        username=False,
-        most_recent=False,
-        timeout=None,
-        skip_clientids=[],
-        batch=None,
-    ):
+        cv: Optional[str] = None,
+        data: bool = False,
+        username: bool = False,
+        most_recent: bool = False,
+        timeout: Optional[int] = None,
+        skip_clientids: List[str] = [],
+        batch: Optional[int] = None,
+    ) -> Union[List[Any], Dict[Any, Any]]:
         """retrieves *all* updates for this bucket, regardless of the user
             which made the update.
 
@@ -352,23 +364,22 @@ class Bucket(object):
         url = "%s/%s/all" % (self.appname, self.bucket)
         url = self._build_url(url)
 
-        params = {"clientid": self.clientid, "cv": cv, "skip_clientid": skip_clientids}
-        if username:
-            params["username"] = 1
-        if data:
-            params["data"] = 1
-        if most_recent:
-            params["most_recent"] = 1
-        try:
-            params["batch"] = int(batch)
-        except:
-            params["batch"] = self.BATCH_DEFAULT_SIZE
+        params = {
+            "clientid": self.clientid,
+            "cv": cv,
+            "skip_clientid": skip_clientids,
+            "batch": str(batch) if batch is not None else str(self.BATCH_DEFAULT_SIZE),
+            "username": "1" if username else None,
+            "data": "1" if data else None,
+            "most_recent": "1" if most_recent else None,
+            }
         headers = self._auth_header()
         try:
-            r = requests.get(url, headers=headers, timeout=timeout, params=params)
-        except http.client.BadStatusLine:
-            # TODO: port to requests
-            return []
+            r = requests.get(url, headers=headers, timeout=timeout, params=params) # type: ignore
+            r.raise_for_status()
+        # except http.client.BadStatusLine:
+        #     # TODO: port to requests
+        #     return []
         except Exception as e:
             # TODO: port to requests
             if any(
@@ -376,7 +387,7 @@ class Bucket(object):
                 for msg in ["timed out", "Connection refused", "Connection reset"]
             ) or getattr(e, "code", None) in [502, 504]:
                 return []
-            raise
+            raise e
         return r.json()
 
 
@@ -392,39 +403,48 @@ class SPUser(object):
         {'age': 23}
     """
 
-    def __init__(self, appname, auth_token, host=None, scheme="https", clientid=None):
+    def __init__(
+        self,
+        appname: str,
+        auth_token: str,
+        host: Optional[str] = None,
+        scheme: str = "https",
+        clientid: Optional[str] = None,
+    ) -> None:
 
         self.bucket = Bucket(
             appname, auth_token, "spuser", host=host, scheme=scheme, clientid=clientid
         )
 
-    def get(self):
+    def get(self) -> Dict[Any, Any]:
         return self.bucket.get("info")
 
-    def post(self, data):
-        self.bucket.post("info", data)
+    def post(
+        self, data: Dict[Any, Any]
+    ) -> Optional[Union[str, Tuple[str, Dict[Any, Any]]]]:
+        return self.bucket.post("info", data)
 
 
 class Api(object):
-    def __init__(self, appname, auth_token, **kw):
+    def __init__(self, appname: str, auth_token: str, **kw: Any) -> None:
         self.appname = appname
         self.token = auth_token
         self._kw = kw
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Union[SPUser, Bucket]:
         return Api.__getitem__(self, name)
 
-    def __getitem__(self, name):
+    def __getitem__(self, name: str) -> Union[SPUser, Bucket]:
         if name.lower() == "spuser":
             return SPUser(self.appname, self.token, **self._kw)
         return Bucket(self.appname, self.token, name, **self._kw)
 
 
 class Admin(Api):
-    def __init__(self, appname, admin_token, **kw):
+    def __init__(self, appname: str, admin_token: str, **kw: Any) -> None:
         self.appname = appname
         self.token = admin_token
         self._kw = kw
 
-    def as_user(self, userid):
+    def as_user(self, userid: str) -> Api:
         return Api(self.appname, self.token, userid=userid, **self._kw)
