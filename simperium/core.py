@@ -1,14 +1,15 @@
+import http.client
+import json
 import os
 import sys
+import urllib.error
+import urllib.parse
+import urllib.request
 import uuid
-import urllib.request, urllib.parse, urllib.error
-import urllib.request, urllib.error, urllib.parse
-import http.client
 
-try:
-    import simplejson as json
-except ImportError:
-    import json
+from typing import Optional
+
+import requests
 
 
 class Auth(object):
@@ -20,7 +21,7 @@ class Auth(object):
         >>> Auth.create('john@company.com', 'secret123')
         'db3d2a64abf711e0b63012313d001a3b'
     """
-    def __init__(self, appname, api_key, host=None, scheme='https'):
+    def __init__(self, appname: str, api_key: str, host: Optional[str]=None, scheme: str='https') -> None:
         if not host:
             host = os.environ.get('SIMPERIUM_AUTHHOST', 'auth.simperium.com')
         self.appname = appname
@@ -28,27 +29,24 @@ class Auth(object):
         self.host = host
         self.scheme = scheme
 
-    def _request(self, url, data=None, headers=None, method=None):
-        url = '%s://%s/1/%s' % (self.scheme, self.host, url)
-        if not headers:
-            headers = {}
-        if data:
-            data = urllib.parse.urlencode(data)
-        request = urllib.request.Request(url, data, headers=headers)
-        if method:
-            request.get_method = lambda: method
-        response = urllib.request.urlopen(request)
-        return response
-
     def create(self, username, password):
         data = {
             'client_id': self.api_key,
             'username': username,
             'password': password, }
+
+        url = '{}://{}/1/{}'.format(self.scheme, self.host, self.appname+'/create/')
         try:
-            response = self._request(self.appname+'/create/', data)
-            return json.loads(response.read())['access_token']
-        except urllib.error.HTTPError:
+            r = requests.post(url, data=data)
+            return r.json()['access_token']
+        except ValueError:
+            # invalid json
+            return None
+        except KeyError:
+            # no access_token
+            return None
+        except Exception:
+            # TODO: more precise exception - this is to catch requests network error only
             return None
 
     def authorize(self, username, password):
@@ -56,8 +54,10 @@ class Auth(object):
             'client_id': self.api_key,
             'username': username,
             'password': password, }
-        response = self._request(self.appname+'/authorize/', data)
-        return json.loads(response.read())['access_token']
+
+        url = '{}://{}/1/{}'.format(self.scheme, self.host, self.appname+'/authorize/')
+        r = requests.post(url, data=data)
+        return r.json()['access_token']
 
 
 class Bucket(object):
