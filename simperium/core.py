@@ -1,9 +1,9 @@
 import os
 import sys
 import uuid
-import urllib
-import urllib2
-import httplib
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
+import http.client
 
 try:
     import simplejson as json
@@ -33,11 +33,11 @@ class Auth(object):
         if not headers:
             headers = {}
         if data:
-            data = urllib.urlencode(data)
-        request = urllib2.Request(url, data, headers=headers)
+            data = urllib.parse.urlencode(data)
+        request = urllib.request.Request(url, data, headers=headers)
         if method:
             request.get_method = lambda: method
-        response = urllib2.urlopen(request)
+        response = urllib.request.urlopen(request)
         return response
 
     def create(self, username, password):
@@ -48,7 +48,7 @@ class Auth(object):
         try:
             response = self._request(self.appname+'/create/', data)
             return json.loads(response.read())['access_token']
-        except urllib2.HTTPError:
+        except urllib.error.HTTPError:
             return None
 
     def authorize(self, username, password):
@@ -111,13 +111,13 @@ class Bucket(object):
         url = '%s://%s/1/%s' % (self.scheme, self.host, url)
         if not headers:
             headers = {}
-        request = urllib2.Request(url, data, headers=headers)
+        request = urllib.request.Request(url, data.encode('utf8'), headers=headers)
         if method:
             request.get_method = lambda: method
         if sys.version_info < (2, 6):
-            response = urllib2.urlopen(request)
+            response = urllib.request.urlopen(request)
         else:
-            response = urllib2.urlopen(request, timeout=timeout)
+            response = urllib.request.urlopen(request, timeout=timeout)
         return response
 
     def index(self, data=False, mark=None, limit=None, since=None):
@@ -158,7 +158,7 @@ class Bucket(object):
             args['limit'] = str(limit)
         if since:
             args['since'] = str(since)
-        args = urllib.urlencode(args)
+        args = urllib.parse.urlencode(args)
         if len(args):
             url += '?'+args
 
@@ -173,7 +173,7 @@ class Bucket(object):
             url += '/v/%s' % version
         try:
             response = self._request(url, headers=self._auth_header())
-        except urllib2.HTTPError, e:
+        except urllib.error.HTTPError as e:
             if getattr(e, 'code') == 404:
                 return default
             raise
@@ -199,7 +199,7 @@ class Bucket(object):
         data = json.dumps(data)
         try:
             response = self._request(url, data, headers=self._auth_header())
-        except urllib2.HTTPError:
+        except urllib.error.HTTPError:
             return None
         if include_response:
             return item, json.loads(response.read())
@@ -217,7 +217,7 @@ class Bucket(object):
             returns an array of change responses (check for error codes)
         """
         changes_list = []
-        for itemid, data in bulk_data.items():
+        for itemid, data in list(bulk_data.items()):
             change = {
                 "id"    : itemid,
                 "o"     : "M",
@@ -225,7 +225,7 @@ class Bucket(object):
                 "ccid"  : self._gen_ccid(),
             }
             # manually construct jsondiff, equivalent to jsondiff.diff( {}, data )
-            for k, v in data.items():
+            for k, v in list(data.items()):
                 change['v'][k] = {'o': '+', 'v': v}
 
             changes_list.append( change )
@@ -280,9 +280,9 @@ class Bucket(object):
         headers = self._auth_header()
         try:
             response = self._request(url, headers=headers, timeout=timeout)
-        except httplib.BadStatusLine:
+        except http.client.BadStatusLine:
             return []
-        except Exception, e:
+        except Exception as e:
             if any(msg in str(e) for msg in ['timed out', 'Connection refused', 'Connection reset']) or \
                     getattr(e, 'code', None) in [502, 504]:
                 return []
@@ -323,7 +323,7 @@ class Bucket(object):
         if most_recent:
             url += '&most_recent=1'
         for clientid in skip_clientids:
-            url += '&skip_clientid=%s' % urllib.quote_plus(clientid)
+            url += '&skip_clientid=%s' % urllib.parse.quote_plus(clientid)
         try:
             url += '&batch=%d' % int(batch)
         except:
@@ -331,9 +331,9 @@ class Bucket(object):
         headers = self._auth_header()
         try:
             response = self._request(url, headers=headers, timeout=timeout)
-        except httplib.BadStatusLine:
+        except http.client.BadStatusLine:
             return []
-        except Exception, e:
+        except Exception as e:
             if any(msg in str(e) for msg in ['timed out', 'Connection refused', 'Connection reset']) or \
                     getattr(e, 'code', None) in [502, 504]:
                 return []

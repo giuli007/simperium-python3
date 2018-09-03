@@ -33,7 +33,7 @@ class ErrorCollectingOptionParser(OptionParser):
 
     def parse_args(self, argv):
         options, args = OptionParser.parse_args(self, argv)
-        for k,v in options.__dict__.iteritems():
+        for k,v in options.__dict__.items():
             if k in self._custom_names:
                 options.__dict__[self._custom_names[k]] = v
                 del options.__dict__[k]
@@ -42,7 +42,7 @@ class ErrorCollectingOptionParser(OptionParser):
     def error(self, msg):
         self._errors.append(msg)
 
-optypes=[int,long,float,complex] # not type='choice' choices='a|b'
+optypes=[int,int,float,complex] # not type='choice' choices='a|b'
 def optype(t):
     if t is bool:
         return None
@@ -53,7 +53,7 @@ def optype(t):
 def func_to_optionparser(func):
     args, varargs, varkw, defaultvals = inspect.getargspec(func)
     defaultvals = defaultvals or ()
-    options = dict(zip(args[-len(defaultvals):], defaultvals))
+    options = dict(list(zip(args[-len(defaultvals):], defaultvals)))
     helpdict = getattr(func, 'optfunc_arghelp', {})
     def defaulthelp(examples):
         return ' (default: %s)'%examples
@@ -75,17 +75,17 @@ def func_to_optionparser(func):
     else:
         required_args = args[argstart:]
 
-    args = filter( lambda x: x != rest_name, args )
+    args = [x for x in args if x != rest_name]
     # Build the OptionParser:
 
     opt = ErrorCollectingOptionParser(usage = ds+posargshelp)
 
     # Add the options, automatically detecting their -short and --long names
     shortnames = set(['h'])
-    for name,_ in options.items():
+    for name,_ in list(options.items()):
         if single_char_prefix_re.match(name):
             shortnames.add(name[0])
-    for argname, example in options.items():
+    for argname, example in list(options.items()):
         # They either explicitly set the short with x_blah...
         name = argname
         if single_char_prefix_re.match(name):
@@ -117,8 +117,8 @@ def func_to_optionparser(func):
             action = 'store'
         examples=str(example)
         if isinstance(example, int):
-            if example==sys.maxint: examples="INFINITY"
-            if example==(-sys.maxint-1): examples="-INFINITY"
+            if example==sys.maxsize: examples="INFINITY"
+            if example==(-sys.maxsize-1): examples="-INFINITY"
         help_post=defaulthelp(examples)
         kwargs=dict(action=action, dest=name, default=example,
             help = helpdict.get(argname, '')+help_post,
@@ -156,7 +156,7 @@ def resolve_args(func, argv, func_name=None):
 
     fargs, varargs, varkw, defaults = inspect.getargspec(func)
     if rest_name in fargs:
-        args = filter( lambda x: x is not None, args )
+        args = [x for x in args if x is not None]
         setattr(options, rest_name, tuple(args))
 
     return options.__dict__, parser._errors

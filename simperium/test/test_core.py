@@ -9,10 +9,10 @@ api_key = os.environ.get('SIMPERIUM_CLIENT_TEST_APIKEY')
 appname = os.environ.get('SIMPERIUM_CLIENT_TEST_APPNAME')
 
 if not appname:
-    print
-    print
-    print "\tset SIMPERIUM_CLIENT_TEST_APPNAME and SIMPERIUM_CLIENT_TEST_APIKEY"
-    print
+    print()
+    print()
+    print("\tset SIMPERIUM_CLIENT_TEST_APPNAME and SIMPERIUM_CLIENT_TEST_APIKEY")
+    print()
     sys.exit()
 
 # cache user create to cut down on the number of users created by the test suite
