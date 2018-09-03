@@ -16,19 +16,26 @@ class Auth(object):
         >>> Auth.create('john@company.com', 'secret123')
         'db3d2a64abf711e0b63012313d001a3b'
     """
-    def __init__(self, appname: str, api_key: str, host: Optional[str]=None, scheme: str='https') -> None:
+
+    def __init__(
+        self,
+        appname: str,
+        api_key: str,
+        host: Optional[str] = None,
+        scheme: str = "https",
+    ) -> None:
         """
         Inits the Auth class.
         """
         if not host:
-            host = os.environ.get('SIMPERIUM_AUTHHOST', 'auth.simperium.com')
+            host = os.environ.get("SIMPERIUM_AUTHHOST", "auth.simperium.com")
         self.appname = appname
         self.api_key = api_key
         self.host = host
         self.scheme = scheme
 
     def _build_url(self, endpoint: str) -> str:
-        return '{}://{}/1/{}'.format(self.scheme, self.host, endpoint)
+        return "{}://{}/1/{}".format(self.scheme, self.host, endpoint)
 
     def create(self, username: str, password: str) -> Optional[str]:
         """
@@ -36,16 +43,13 @@ class Auth(object):
         Returns the user access token if successful, or None otherwise.
         """
 
-        data = {
-            'client_id': self.api_key,
-            'username': username,
-            'password': password, }
+        data = {"client_id": self.api_key, "username": username, "password": password}
 
-        url = '{}://{}/1/{}'.format(self.scheme, self.host, self.appname+'/create/')
-        url = self._build_url(self.appname+'/create/')
+        url = "{}://{}/1/{}".format(self.scheme, self.host, self.appname + "/create/")
+        url = self._build_url(self.appname + "/create/")
         try:
             r = requests.post(url, data=data)
-            return r.json()['access_token']
+            return r.json()["access_token"]
         except ValueError:
             # invalid json
             return None
@@ -61,14 +65,13 @@ class Auth(object):
         Get the access token for a user.
         Returns the access token as a string or raises an error on failure.
         """
-        data = {
-            'client_id': self.api_key,
-            'username': username,
-            'password': password, }
+        data = {"client_id": self.api_key, "username": username, "password": password}
 
-        url = '{}://{}/1/{}'.format(self.scheme, self.host, self.appname+'/authorize/')
+        url = "{}://{}/1/{}".format(
+            self.scheme, self.host, self.appname + "/authorize/"
+        )
         r = requests.post(url, data=data)
-        return r.json()['access_token']
+        return r.json()["access_token"]
 
 
 class Bucket(object):
@@ -89,14 +92,19 @@ class Bucket(object):
 
     BATCH_DEFAULT_SIZE = 100
 
-    def __init__(self, appname, auth_token, bucket,
-            userid=None,
-            host=None,
-            scheme='https',
-            clientid=None):
+    def __init__(
+        self,
+        appname,
+        auth_token,
+        bucket,
+        userid=None,
+        host=None,
+        scheme="https",
+        clientid=None,
+    ):
 
         if not host:
-            host = os.environ.get('SIMPERIUM_APIHOST', 'api.simperium.com')
+            host = os.environ.get("SIMPERIUM_APIHOST", "api.simperium.com")
 
         self.userid = userid
         self.host = host
@@ -107,19 +115,19 @@ class Bucket(object):
         if clientid:
             self.clientid = clientid
         else:
-            self.clientid = 'py-%s' % uuid.uuid4().hex
+            self.clientid = "py-%s" % uuid.uuid4().hex
 
     def _auth_header(self):
-        headers = {'X-Simperium-Token': '%s' % self.auth_token}
+        headers = {"X-Simperium-Token": "%s" % self.auth_token}
         if self.userid:
-            headers['X-Simperium-User'] = self.userid
+            headers["X-Simperium-User"] = self.userid
         return headers
 
     def _gen_ccid(self) -> str:
         return uuid.uuid4().hex
 
     def _build_url(self, endpoint: str) -> str:
-        return '{}://{}/1/{}'.format(self.scheme, self.host, endpoint)
+        return "{}://{}/1/{}".format(self.scheme, self.host, endpoint)
 
     def index(self, data=False, mark=None, limit=None, since=None):
         """
@@ -148,17 +156,17 @@ class Bucket(object):
                 }, {....}],
             }
         """
-        url = self._build_url('%s/%s/index' % (self.appname, self.bucket))
+        url = self._build_url("%s/%s/index" % (self.appname, self.bucket))
 
         args = {}
         if data:
-            args['data'] = '1'
+            args["data"] = "1"
         if mark:
-            args['mark'] = str(mark)
+            args["mark"] = str(mark)
         if limit:
-            args['limit'] = str(limit)
+            args["limit"] = str(limit)
         if since:
-            args['since'] = str(since)
+            args["since"] = str(since)
 
         r = requests.get(url, headers=self._auth_header(), params=args)
         r.raise_for_status()
@@ -170,9 +178,9 @@ class Bucket(object):
         specific version requested.
         Returns `default` on a 404, raises error on http error
         """
-        url = '%s/%s/i/%s' % (self.appname, self.bucket, item)
+        url = "%s/%s/i/%s" % (self.appname, self.bucket, item)
         if version:
-            url += '/v/%s' % version
+            url += "/v/%s" % version
         url = self._build_url(url)
 
         r = requests.get(url, headers=self._auth_header())
@@ -182,7 +190,9 @@ class Bucket(object):
 
         return r.json()
 
-    def post(self, item, data, version=None, ccid=None, include_response=False, replace=False):
+    def post(
+        self, item, data, version=None, ccid=None, include_response=False, replace=False
+    ):
         """posts the supplied data to item
 
             returns a unique change id on success, or None, if the post was not
@@ -194,24 +204,22 @@ class Bucket(object):
         if not ccid:
             ccid = self._gen_ccid()
 
-        url = '%s/%s/i/%s' % (self.appname, self.bucket, item)
+        url = "%s/%s/i/%s" % (self.appname, self.bucket, item)
         if version:
-            url += '/v/%s' % version
+            url += "/v/%s" % version
         url = self._build_url(url)
 
-        params = {
-                'clientid': self.clientid,
-                'ccid': ccid
-                }
+        params = {"clientid": self.clientid, "ccid": ccid}
 
         if include_response:
-            params['response'] = 1
+            params["response"] = 1
         if replace:
-            params['replace'] = 1
+            params["replace"] = 1
 
         try:
-            r = requests.post(url, json=data, headers=self._auth_header(),
-                    params=params)
+            r = requests.post(
+                url, json=data, headers=self._auth_header(), params=params
+            )
             r.raise_for_status()
             # TODO: return none on http error
         except Exception as e:
@@ -234,26 +242,21 @@ class Bucket(object):
         """
         changes_list = []
         for itemid, data in list(bulk_data.items()):
-            change = {
-                "id"    : itemid,
-                "o"     : "M",
-                "v"     : {},
-                "ccid"  : self._gen_ccid(),
-            }
+            change = {"id": itemid, "o": "M", "v": {}, "ccid": self._gen_ccid()}
             # manually construct jsondiff, equivalent to jsondiff.diff( {}, data )
             for k, v in list(data.items()):
-                change['v'][k] = {'o': '+', 'v': v}
+                change["v"][k] = {"o": "+", "v": v}
 
-            changes_list.append( change )
+            changes_list.append(change)
 
-        url = '%s/%s/changes' % (self.appname, self.bucket)
+        url = "%s/%s/changes" % (self.appname, self.bucket)
         url = self._build_url(url)
-        params = {
-                'clientid': self.clientid
-                }
-        params['wait'] = 1
+        params = {"clientid": self.clientid}
+        params["wait"] = 1
 
-        r = request.post(url, data=changes_list, headers=self._auth_header(), params=params)
+        r = request.post(
+            url, data=changes_list, headers=self._auth_header(), params=params
+        )
         r.raise_for_status()
 
         if not wait:
@@ -262,7 +265,6 @@ class Bucket(object):
 
         # check each change response for 'error'
         return r.json()
-
 
     def new(self, data, ccid=None):
         return self.post(uuid.uuid4().hex, data, ccid=ccid)
@@ -273,16 +275,12 @@ class Bucket(object):
     def delete(self, item, version=None):
         """deletes the item from bucket"""
         ccid = self._gen_ccid()
-        url = '%s/%s/i/%s' % (self.appname, self.bucket, item)
+        url = "%s/%s/i/%s" % (self.appname, self.bucket, item)
         if version:
-            url += '/v/%s' % version
+            url += "/v/%s" % version
         url = self._build_url(url)
-        params = {
-                'clientid': self.clientid,
-                'ccid': ccid
-                }
-        r = requests.delete(url, headers=self._auth_header(),
-                params=params)
+        params = {"clientid": self.clientid, "ccid": ccid}
+        r = requests.delete(url, headers=self._auth_header(), params=params)
         r.raise_for_status()
         if not r.text.strip():
             return ccid
@@ -298,29 +296,37 @@ class Bucket(object):
                 is supplied an empty list will be return if no updates are made
                 before the timeout is reached.
         """
-        url = '%s/%s/changes' % (self.appname, self.bucket)
+        url = "%s/%s/changes" % (self.appname, self.bucket)
         url = self._build_url(url)
-        params = {
-                'clientid': self.clientid
-                }
+        params = {"clientid": self.clientid}
         if cv is not None:
-            params['cv'] = cv
+            params["cv"] = cv
         headers = self._auth_header()
         try:
-            r = requests.get(url, headers=headers, timeout=timeout,
-                    params=params)
+            r = requests.get(url, headers=headers, timeout=timeout, params=params)
             r.raise_for_status()
         except http.client.BadStatusLine:
             # TODO: port this
             return []
         except Exception as e:
-            if any(msg in str(e) for msg in ['timed out', 'Connection refused', 'Connection reset']) or \
-                    getattr(e, 'code', None) in [502, 504]:
+            if any(
+                msg in str(e)
+                for msg in ["timed out", "Connection refused", "Connection reset"]
+            ) or getattr(e, "code", None) in [502, 504]:
                 return []
             raise
         return r.json()
 
-    def all(self, cv=None, data=False, username=False, most_recent=False, timeout=None, skip_clientids=[], batch=None):
+    def all(
+        self,
+        cv=None,
+        data=False,
+        username=False,
+        most_recent=False,
+        timeout=None,
+        skip_clientids=[],
+        batch=None,
+    ):
         """retrieves *all* updates for this bucket, regardless of the user
             which made the update.
 
@@ -343,35 +349,32 @@ class Bucket(object):
                 is supplied an empty list will be return if no updates are made
                 before the timeout is reached.
         """
-        url = '%s/%s/all' % ( self.appname, self.bucket)
+        url = "%s/%s/all" % (self.appname, self.bucket)
         url = self._build_url(url)
 
-        params = {
-                'clientid': self.clientid,
-                'cv': cv,
-                'skip_clientid': skip_clientids
-        }
+        params = {"clientid": self.clientid, "cv": cv, "skip_clientid": skip_clientids}
         if username:
-            params['username'] = 1
+            params["username"] = 1
         if data:
-            params['data'] = 1
+            params["data"] = 1
         if most_recent:
-            params['most_recent'] = 1
+            params["most_recent"] = 1
         try:
-            params['batch'] = int(batch)
+            params["batch"] = int(batch)
         except:
-            params['batch'] = self.BATCH_DEFAULT_SIZE
+            params["batch"] = self.BATCH_DEFAULT_SIZE
         headers = self._auth_header()
         try:
-            r = requests.get(url, headers=headers, timeout=timeout,
-                    params=params)
+            r = requests.get(url, headers=headers, timeout=timeout, params=params)
         except http.client.BadStatusLine:
             # TODO: port to requests
             return []
         except Exception as e:
             # TODO: port to requests
-            if any(msg in str(e) for msg in ['timed out', 'Connection refused', 'Connection reset']) or \
-                    getattr(e, 'code', None) in [502, 504]:
+            if any(
+                msg in str(e)
+                for msg in ["timed out", "Connection refused", "Connection reset"]
+            ) or getattr(e, "code", None) in [502, 504]:
                 return []
             raise
         return r.json()
@@ -388,21 +391,18 @@ class SPUser(object):
         >>> bucket.get()
         {'age': 23}
     """
-    def __init__(self, appname, auth_token,
-            host=None,
-            scheme='https',
-            clientid=None):
 
-        self.bucket = Bucket(appname, auth_token, 'spuser',
-            host=host,
-            scheme=scheme,
-            clientid=clientid)
+    def __init__(self, appname, auth_token, host=None, scheme="https", clientid=None):
+
+        self.bucket = Bucket(
+            appname, auth_token, "spuser", host=host, scheme=scheme, clientid=clientid
+        )
 
     def get(self):
-        return self.bucket.get('info')
+        return self.bucket.get("info")
 
     def post(self, data):
-        self.bucket.post('info', data)
+        self.bucket.post("info", data)
 
 
 class Api(object):
@@ -415,7 +415,7 @@ class Api(object):
         return Api.__getitem__(self, name)
 
     def __getitem__(self, name):
-        if name.lower() == 'spuser':
+        if name.lower() == "spuser":
             return SPUser(self.appname, self.token, **self._kw)
         return Bucket(self.appname, self.token, name, **self._kw)
 

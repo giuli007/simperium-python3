@@ -1,5 +1,5 @@
 
-.PHONY: test install
+.PHONY: test install format
 
 install:
 	pipenv install
@@ -7,3 +7,6 @@ install:
 test:
 	pipenv run mypy simperium/
 	pipenv run pytest
+
+format:
+	pipenv run black simperium examples
