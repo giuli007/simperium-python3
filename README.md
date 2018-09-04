@@ -1,4 +1,4 @@
-# simperium-python
+# simperium-python3
 
 Simperium is a simple way for developers to move data as it changes, instantly
 and automatically. This is the Python library. You can [browse the
@@ -12,7 +12,29 @@ This is not yet a full Simperium library for parsing diffs and changes. It's a
 wrapper for our [HTTP API](https://simperium.com/docs/http/) intended for
 scripting and basic backend development.
 
-This fork created to port the library to Python 3.
+## About this fork
+
+This is a Python 3 fork of
+[https://github.com/Simperium/simperium-python](https://github.com/Simperium/simperium-python).
+
+Ported and maintained by Samuel Walladge.
+
+The following changes were done from the original python 2 version:
+
+- 2to3
+- use `requests` instead of urllib
+- don't catch any http errors; clients can handle that
+- add type hints
+- use a Pipfile to manage deps
+- update setup.py
+
+
+## Installing
+
+
+```
+pip install git+https://github.com/swalladge/simperium-python3.git#egg=Simperium3
+```
 
 
 ## Developing
@@ -25,6 +47,15 @@ make install
 
 Tests (unit tests with pytest and type checking with mypy):
 
+Put the following in `.env` (with your actual values):
+
+```
+export SIMPERIUM_CLIENT_TEST_APPNAME="foo-bar-123"
+export SIMPERIUM_CLIENT_TEST_APIKEY="<app api key>"
+```
+
+Then:
+
 ```
 make tests
 ```
@@ -32,8 +63,25 @@ make tests
 Format all the code consistently:
 
 ```
+pipenv run pip install black
 make fmt
 ```
+
+(pipenv panics if black is in dev-dependencies because it is a pre-release
+version.)
+
+
+## Examples
+
+A bunch of examples are included in the `examples/` directory. Run them like so:
+
+
+```
+pipenv run python examples/simpletodo list app-name-123 myusertoken
+```
+
+etc.
+
 
 
 ## Getting Started
