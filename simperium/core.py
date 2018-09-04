@@ -6,7 +6,6 @@ from typing import Any, Dict, List, Optional, SupportsInt, Tuple, Union
 
 import requests
 
-
 class Auth(object):
     """
     example use:
@@ -40,22 +39,16 @@ class Auth(object):
     def create(self, username: str, password: str) -> Optional[str]:
         """
         Create a new user with `username` and `password`.
-        Returns the user access token if successful, or None otherwise.
+        Returns the user access token if successful, or raises an error
+        otherwise.
         """
 
         data = {"client_id": self.api_key, "username": username, "password": password}
 
         url = self._build_url(self.appname + "/create/")
-        try:
-            r = requests.post(url, data=data)
-            r.raise_for_status()
-            return r.json().get("access_token")
-        except ValueError:
-            # invalid json, no access token
-            return None
-        except Exception:
-            # TODO: handle http errors
-            return None
+        r = requests.post(url, data=data)
+        r.raise_for_status()
+        return r.json().get("access_token")
 
     def authorize(self, username: str, password: str) -> str:
         """
@@ -198,13 +191,11 @@ class Bucket(object):
         include_response: bool = False,
         replace: bool = False,
     ) -> Optional[Union[str, Tuple[str, Dict[Any, Any]]]]:
-        """posts the supplied data to item
+        """
+        Posts the supplied data to `item`.
 
-            returns a unique change id on success, or None, if the post was not
-            successful
-
-            If `include_response` is True, returns a tuple of (`item`, the json
-            response). Otherwise, returns `item`)
+        If `include_response` is True, returns a tuple of (`item`, the json
+        response). Otherwise, returns `item`)
         """
         ccid = ccid if ccid else self._gen_ccid()
 
@@ -220,14 +211,10 @@ class Bucket(object):
             "replace": 1 if replace else None,
         }
 
-        try:
-            r = requests.post(
-                url, json=data, headers=self._auth_header(), params=params
-            )
-            r.raise_for_status()
-            # TODO: return none on http error
-        except Exception as e:
-            return None
+        r = requests.post(
+            url, json=data, headers=self._auth_header(), params=params
+        )
+        r.raise_for_status()
         if include_response:
             return item, r.json()
         else:
@@ -281,7 +268,7 @@ class Bucket(object):
     ) -> Optional[Union[str, Tuple[str, Dict[Any, Any]]]]:
         return self.post(item, data, **kw)
 
-    def delete(self, item: str, version: Optional[str] = None) -> Optional[str]:
+    def delete(self, item: str, version: Optional[Union[str, int]] = None) -> Optional[str]:
         """Deletes the item from bucket.
         Returns the ccid if the response is not an empty string.
         """
@@ -314,19 +301,8 @@ class Bucket(object):
         if cv is not None:
             params["cv"] = cv
         headers = self._auth_header()
-        try:
-            r = requests.get(url, headers=headers, timeout=timeout, params=params)
-            r.raise_for_status()
-        except http.client.BadStatusLine:
-            # TODO: port this
-            return []
-        except Exception as e:
-            if any(
-                msg in str(e)
-                for msg in ["timed out", "Connection refused", "Connection reset"]
-            ) or getattr(e, "code", None) in [502, 504]:
-                return []
-            raise
+        r = requests.get(url, headers=headers, timeout=timeout, params=params)
+        r.raise_for_status()
         return r.json()
 
     def all(
@@ -374,20 +350,8 @@ class Bucket(object):
             "most_recent": "1" if most_recent else None,
             }
         headers = self._auth_header()
-        try:
-            r = requests.get(url, headers=headers, timeout=timeout, params=params) # type: ignore
-            r.raise_for_status()
-        # except http.client.BadStatusLine:
-        #     # TODO: port to requests
-        #     return []
-        except Exception as e:
-            # TODO: port to requests
-            if any(
-                msg in str(e)
-                for msg in ["timed out", "Connection refused", "Connection reset"]
-            ) or getattr(e, "code", None) in [502, 504]:
-                return []
-            raise e
+        r = requests.get(url, headers=headers, timeout=timeout, params=params) # type: ignore
+        r.raise_for_status()
         return r.json()
 
 
