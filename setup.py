@@ -1,17 +1,25 @@
 import sys
-from distutils.core import setup
+from setuptools import setup
 
-install_requires = []
+with open('README.md') as f:
+    long_description = f.read()
 
 setup(
-    name='Simperium',
-    version='0.0.5',
+    name='Simperium3',
+    version='0.1.0',
     author='Andy Gayton',
     author_email='andy@simperium.com',
     packages=['simperium', 'simperium.test'],
-    scripts=[],
-    # url='http://pypi.python.org/pypi/Simperium/',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/swalladge/simperium-python3",
     # license='LICENSE.txt',
-    description='Python client for the Simperium synchronization platform',
-    long_description=open('README.md').read(),
-    install_requires=install_requires,)
+    description='Python 3 client for the Simperium synchronization platform',
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
+    install_requires=['requests', 'typing'],
+    python_requires='>=3',
+)

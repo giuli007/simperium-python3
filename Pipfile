@@ -5,11 +5,8 @@ name = "pypi"
 
 [packages]
 requests = "*"
+typing = "*"
 
 [dev-packages]
 pytest = "*"
 mypy = "*"
-black = "*"
-
-[requires]
-python_version = "3.7"
