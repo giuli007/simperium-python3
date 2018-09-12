@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, SupportsInt, Tuple, Union
 
 import requests
 
+
 class Auth(object):
     """
     example use:
@@ -158,7 +159,9 @@ class Bucket(object):
             "data": "1" if data else None,
         }
 
-        r = requests.get(url, headers=self._auth_header(), params=params) # type: ignore
+        r = requests.get(  # type: ignore
+            url, headers=self._auth_header(), params=params
+        )
         r.raise_for_status()
         return r.json()
 
@@ -211,9 +214,7 @@ class Bucket(object):
             "replace": 1 if replace else None,
         }
 
-        r = requests.post(
-            url, json=data, headers=self._auth_header(), params=params
-        )
+        r = requests.post(url, json=data, headers=self._auth_header(), params=params)
         r.raise_for_status()
         if include_response:
             return item, r.json()
@@ -259,16 +260,23 @@ class Bucket(object):
         return r.json()
 
     def new(
-        self, data: Dict[Any, Any], ccid: Optional[str] = None
+        self,
+        data: Dict[Any, Any],
+        ccid: Optional[str] = None,
+        include_response: bool = False,
     ) -> Optional[Union[str, Tuple[str, Dict[Any, Any]]]]:
-        return self.post(uuid.uuid4().hex, data, ccid=ccid)
+        return self.post(
+            uuid.uuid4().hex, data, ccid=ccid, include_response=include_response
+        )
 
     def set(
         self, item: str, data: Dict[Any, Any], **kw: Any
     ) -> Optional[Union[str, Tuple[str, Dict[Any, Any]]]]:
         return self.post(item, data, **kw)
 
-    def delete(self, item: str, version: Optional[Union[str, int]] = None) -> Optional[str]:
+    def delete(
+        self, item: str, version: Optional[Union[str, int]] = None
+    ) -> Optional[str]:
         """Deletes the item from bucket.
         Returns the ccid if the response is not an empty string.
         """
@@ -348,9 +356,11 @@ class Bucket(object):
             "username": "1" if username else None,
             "data": "1" if data else None,
             "most_recent": "1" if most_recent else None,
-            }
+        }
         headers = self._auth_header()
-        r = requests.get(url, headers=headers, timeout=timeout, params=params) # type: ignore
+        r = requests.get(  # type: ignore
+            url, headers=headers, timeout=timeout, params=params
+        )
         r.raise_for_status()
         return r.json()
 
