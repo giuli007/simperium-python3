@@ -57,6 +57,7 @@ class Auth(object):
         data = {"client_id": self.api_key, "username": username, "password": password}
         url = self._build_url(self.appname + "/authorize/")
         r = requests.post(url, data=data)
+        r.raise_for_status()
         return r.json()["access_token"]
 
 

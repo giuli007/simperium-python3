@@ -6,7 +6,7 @@ with open('README.md') as f:
 
 setup(
     name='Simperium3',
-    version='0.1.0',
+    version='0.1.1',
     author='Andy Gayton',
     author_email='andy@simperium.com',
     packages=['simperium', 'simperium.test'],
@@ -16,7 +16,7 @@ setup(
     # license='LICENSE.txt',
     description='Python 3 client for the Simperium synchronization platform',
     classifiers=[
-        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3 :: Only",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
