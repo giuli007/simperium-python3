@@ -270,9 +270,22 @@ class Bucket(object):
         )
 
     def set(
-        self, item: str, data: Dict[Any, Any], **kw: Any
+        self,
+        item: str,
+        data: Dict[Any, Any],
+        version: Optional[str] = None,
+        ccid: Optional[str] = None,
+        include_response: bool = False,
+        replace: bool = False,
     ) -> Optional[Union[str, Tuple[str, Dict[Any, Any]]]]:
-        return self.post(item, data, **kw)
+        return self.post(
+            item,
+            data,
+            version=version,
+            ccid=ccid,
+            include_response=include_response,
+            replace=replace,
+        )
 
     def delete(
         self, item: str, version: Optional[Union[str, int]] = None
@@ -400,25 +413,66 @@ class SPUser(object):
 
 
 class Api(object):
-    def __init__(self, appname: str, auth_token: str, **kw: Any) -> None:
+    def __init__(
+        self,
+        appname: str,
+        auth_token: str,
+        userid: Optional[str] = None,
+        host: Optional[str] = None,
+        scheme: str = "https",
+        clientid: Optional[str] = None,
+    ) -> None:
         self.appname = appname
         self.token = auth_token
-        self._kw = kw
+        self.userid = userid
+        self.host = host
+        self.scheme = scheme
+        self.clientid = clientid
 
     def __getattr__(self, name: str) -> Union[SPUser, Bucket]:
         return Api.__getitem__(self, name)
 
     def __getitem__(self, name: str) -> Union[SPUser, Bucket]:
         if name.lower() == "spuser":
-            return SPUser(self.appname, self.token, **self._kw)
-        return Bucket(self.appname, self.token, name, **self._kw)
+            return SPUser(
+                self.appname,
+                self.token,
+                host=self.host,
+                scheme=self.scheme,
+                clientid=self.clientid,
+            )
+        return Bucket(
+            self.appname,
+            self.token,
+            name,
+            userid=self.userid,
+            host=self.host,
+            scheme=self.scheme,
+            clientid=self.clientid,
+        )
 
 
 class Admin(Api):
-    def __init__(self, appname: str, admin_token: str, **kw: Any) -> None:
+    def __init__(
+        self,
+        appname: str,
+        admin_token: str,
+        host: Optional[str] = None,
+        scheme: str = "https",
+        clientid: Optional[str] = None,
+    ) -> None:
         self.appname = appname
         self.token = admin_token
-        self._kw = kw
+        self.host = host
+        self.scheme = scheme
+        self.clientid = clientid
 
     def as_user(self, userid: str) -> Api:
-        return Api(self.appname, self.token, userid=userid, **self._kw)
+        return Api(
+            self.appname,
+            self.token,
+            userid=userid,
+            host=self.host,
+            scheme=self.scheme,
+            clientid=self.clientid,
+        )
