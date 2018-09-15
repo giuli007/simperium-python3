@@ -165,15 +165,17 @@ class Bucket(object):
         return r.json()
 
     def get(
-        self, item: str, default: Any = None, version: Optional[str] = None
+        self, item: str, default: Any = None, version: Optional[int] = None
     ) -> Union[Any, Dict[Any, Any]]:
         """
         Retrieves either the latest version of item from this bucket, or the
         specific version requested.
         Returns `default` on a 404, raises error on http error
+
+        `version` should be an integer > 0
         """
         url = "%s/%s/i/%s" % (self.appname, self.bucket, item)
-        if version:
+        if version is not None:
             url += "/v/%s" % version
         url = self._build_url(url)
 
@@ -188,7 +190,7 @@ class Bucket(object):
         self,
         item: str,
         data: Dict[Any, Any],
-        version: Optional[str] = None,
+        version: Optional[int] = None,
         ccid: Optional[str] = None,
         include_response: bool = False,
         replace: bool = False,
@@ -198,11 +200,13 @@ class Bucket(object):
 
         If `include_response` is True, returns a tuple of (`item`, the json
         response). Otherwise, returns `item`)
+
+        `version` should be an integer > 0
         """
         ccid = ccid if ccid else self._gen_ccid()
 
         url = "%s/%s/i/%s" % (self.appname, self.bucket, item)
-        if version:
+        if version is not None:
             url += "/v/%s" % version
         url = self._build_url(url)
 
@@ -286,15 +290,15 @@ class Bucket(object):
             replace=replace,
         )
 
-    def delete(
-        self, item: str, version: Optional[Union[str, int]] = None
-    ) -> Optional[str]:
+    def delete(self, item: str, version: Optional[int] = None) -> Optional[str]:
         """Deletes the item from bucket.
         Returns the ccid if the response is not an empty string.
+
+        `version` should be an integer > 0
         """
         ccid = self._gen_ccid()
         url = "%s/%s/i/%s" % (self.appname, self.bucket, item)
-        if version:
+        if version is not None:
             url += "/v/%s" % version
         url = self._build_url(url)
         params = {"clientid": self.clientid, "ccid": ccid}
