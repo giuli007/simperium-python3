@@ -276,7 +276,7 @@ class Bucket(object):
         self,
         item: str,
         data: Dict[Any, Any],
-        version: Optional[str] = None,
+        version: Optional[int] = None,
         ccid: Optional[str] = None,
         include_response: bool = False,
         replace: bool = False,

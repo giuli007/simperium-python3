@@ -6,7 +6,7 @@ with open('README.md') as f:
 
 setup(
     name='Simperium3',
-    version='0.1.1',
+    version='0.1.2',
     author='Andy Gayton',
     author_email='andy@simperium.com',
     packages=['simperium', 'simperium.test'],
