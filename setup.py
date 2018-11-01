@@ -20,6 +20,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    install_requires=['requests', 'typing'],
+    install_requires=['requests', 'typing;python_version<"3.5"'],
     python_requires='>=3',
 )
