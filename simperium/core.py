@@ -42,10 +42,11 @@ class Auth(object):
         otherwise.
         """
 
-        data = {"client_id": self.api_key, "username": username, "password": password}
+        data = {"username": username, "password": password}
+        headers = {'X-Simperium-API-Key': self.api_key}
 
         url = self._build_url(self.appname + "/create/")
-        r = requests.post(url, data=data)
+        r = requests.post(url, json=data, headers=headers)
         r.raise_for_status()
         return r.json().get("access_token")
 
@@ -54,9 +55,11 @@ class Auth(object):
         Get the access token for a user.
         Returns the access token as a string or raises an error on failure.
         """
-        data = {"client_id": self.api_key, "username": username, "password": password}
+        data = {"username": username, "password": password}
+        headers = {'X-Simperium-API-Key': self.api_key}
+
         url = self._build_url(self.appname + "/authorize/")
-        r = requests.post(url, data=data)
+        r = requests.post(url, json=data, headers=headers)
         r.raise_for_status()
         return r.json()["access_token"]
 
